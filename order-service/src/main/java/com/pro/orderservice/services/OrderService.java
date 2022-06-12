@@ -35,12 +35,12 @@ private  final WebClient webClient;
                     )).build();
 //call for inventory seriveces and check for each stock is present if all stock present then place
      //order
-     webClient.get()
+     InventoryDto inventoryDto = webClient.get()
              .uri("http://localhost:8083/api/inventory")
-              .retrieve()
-                             .bodyToFlux(InventoryDto.class)
-                                     .block
-    repository.save(o);
+             .retrieve()
+             .bodyToFlux(InventoryDto.class)
+             .blockLast();
+     repository.save(o);
     return  o.getOrderNumber();
  }
 
