@@ -1,24 +1,17 @@
-package com.pro.orderservice.entities;
+package com.pro.orderservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
-
-@Entity
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+@Builder
+public class OrderItemResponse {
     private long id;
     private String skuCode;
     private double price;
     private int quantity;
-
-
 }
