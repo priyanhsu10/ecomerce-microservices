@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import javax.transaction.Transactional;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,44 +22,39 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class OrderService {
-private  final OrderRepository repository;
-private final OrderItemRepository itemRepository;
-private  final WebClient webClient;
+    private final OrderRepository repository;
+    private final OrderItemRepository itemRepository;
+    private final WebClient webClient;
 
- public String  createOrder(OrderRequest orderRequest){
+    public String createOrder(OrderRequest orderRequest) {
 
-    Order o = Order.builder().orderNumber(UUID.randomUUID().toString())
-            .orderItems(orderRequest.getOrderItemList()
-                    .stream()
-                    .map(x->mapOrderItem(x))
-                    .collect(Collectors.toList()
-                    )).build();
+        Order o = Order.builder().orderNumber(UUID.randomUUID().toString()).orderItems(orderRequest.getOrderItemList().stream().map(x -> mapOrderItem(x)).collect(Collectors.toList())).build();
 //call for inventory seriveces and check for each stock is present if all stock present then place
-     //order
-     InventoryDto inventoryDto = webClient.get()
-             .uri("http://localhost:8083/api/inventory")
-             .retrieve()
-             .bodyToFlux(InventoryDto.class)
-             .blockLast();
-     repository.save(o);
-    return  o.getOrderNumber();
- }
+        //order
+        List<String> skuCodes = o.getOrderItems().stream().map(x -> x.getSkuCode()).collect(Collectors.toList());
+        InventoryDto[] inventoryDtos = webClient.get().uri("http://localhost:8083/api/inventory",
+                u -> u.queryParam("skuCode", skuCodes).build()).retrieve().bodyToMono(InventoryDto[].class).block();
+        Arrays.stream(inventoryDtos).allMatch(x -> inStock(x, o.getOrderItems()));
+        repository.save(o);
+        return o.getOrderNumber();
+    }
+
+    private boolean inStock(InventoryDto x, List<OrderItem> orderItems) {
+        var orderitem = orderItems.stream().filter(o -> o.getSkuCode().equals(x.getSkuCode())).findFirst();
+        if (orderitem.isPresent()) {
+            return x.getQuantity() > orderitem.get().getQuantity();
+        }
+        throw new  RuntimeException("insuficent stock");
+    }
 
     private OrderItem mapOrderItem(OrderItemReqeust x) {
-      return OrderItem.builder().price(x.getPrice()).skuCode(x.getSkuCode()).quantity(x.getQuantity()).build();
+        return OrderItem.builder().price(x.getPrice()).skuCode(x.getSkuCode()).quantity(x.getQuantity()).build();
 
     }
 
     public List<OrderItemResponse> getOrderItems(List<String> skuCodes) {
 
-      var result= itemRepository.getAllOrderItemInSkuCode(skuCodes);
-    return   result.stream()
-            .map(x->OrderItemResponse.builder()
-                    .id(x.getId())
-                    .price(x.getPrice())
-                    .quantity(x.getQuantity())
-                    .skuCode(x.getSkuCode())
-                    .build())
-            .collect(Collectors.toList());
+        var result = itemRepository.getAllOrderItemInSkuCode(skuCodes);
+        return result.stream().map(x -> OrderItemResponse.builder().id(x.getId()).price(x.getPrice()).quantity(x.getQuantity()).skuCode(x.getSkuCode()).build()).collect(Collectors.toList());
     }
 }

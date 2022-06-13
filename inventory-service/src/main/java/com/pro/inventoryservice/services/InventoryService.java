@@ -34,4 +34,8 @@ public class InventoryService {
     private InventoryResponse mapToResponse(Inventory in) {
         return  InventoryResponse.builder().skuCode(in.getSkuCode()).quantity(in.getQuantity()).build();
     }
+
+    public List<InventoryResponse> getInventoryByskucode(List<String> skuCodes) {
+       return inventoryRepository.findAllInSkuCode(skuCodes);
+    }
 }

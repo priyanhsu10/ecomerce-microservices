@@ -23,9 +23,10 @@ private  final InventoryService inventoryService;
     public  ResponseEntity<List<InventoryResponse>> getAll(){
         return  ResponseEntity.ok(inventoryService.getAll());
     }
-    @GetMapping("/skuCode")
-    public  ResponseEntity<InventoryResponse> getBySkuCode(@PathVariable String skuCode){
-        return  ResponseEntity.ok(inventoryService.getInventory(skuCode));
+    @GetMapping()
+    public ResponseEntity<List<InventoryResponse>> getOrderItemBySkuCode(@RequestParam("skuCode") List<String> skuCodes){
+
+        return  ResponseEntity.ok(inventoryService.getInventoryByskucode(skuCodes));
     }
 
 
