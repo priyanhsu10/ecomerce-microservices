@@ -1,0 +1,25 @@
+server:
+  port: 8085
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    register-with-eureka: false
+    fetch-registry: true
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      locator:
+        enable: true
+      routes:
+        - id: INVENTORY-SERVICE
+          uri: lb://INVENTORY-SERVICE
+        - id: ORDER-SERVICE
+          uri: lb://ORDER-SERVICE
+        - id: PRODUCT-SERVICE
+          uri: lb://PRODUCT-SERVICE
