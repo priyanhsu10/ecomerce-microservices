@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class OrderService {
     private final OrderRepository repository;
     private final OrderItemRepository itemRepository;
-    private final WebClient webClient;
+    private final WebClient.Builder webClient;
 
     public String createOrder(OrderRequest orderRequest) {
 
@@ -32,8 +32,15 @@ public class OrderService {
 //call for inventory seriveces and check for each stock is present if all stock present then place
         //order
         List<String> skuCodes = o.getOrderItems().stream().map(x -> x.getSkuCode()).collect(Collectors.toList());
-        InventoryDto[] inventoryDtos = webClient.get().uri("http://localhost:8083/api/inventory",
-                u -> u.queryParam("skuCode", skuCodes).build()).retrieve().bodyToMono(InventoryDto[].class).block();
+        InventoryDto[] inventoryDtos = webClient
+                .build()
+                .get()
+                        .
+                uri("http://inventory-service/api/inventory",
+                u -> u.queryParam("skuCode", skuCodes).build())
+                .retrieve()
+                .bodyToMono(InventoryDto[].class).
+                block();
         Arrays.stream(inventoryDtos).allMatch(x -> inStock(x, o.getOrderItems()));
         repository.save(o);
         return o.getOrderNumber();
